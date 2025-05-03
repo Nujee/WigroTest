@@ -1,7 +1,9 @@
 {
     "name": "Wigro.Editor",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:1369e18bd91875247bdb2cf895159f88"
+    ],
     "includePlatforms": [
         "Editor"
     ],
