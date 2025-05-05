@@ -24,13 +24,25 @@ namespace Wigro.Editor
                 }
                 else
                 {
-                    // В случае, если конфиг не найден нужно дополнить код созданием данного конфига по пути "Assets/Resources/Settings.asset"
-                    // После создания сказать об этом в консоль и перевести фокус на него в редакторе, а этот метод благополучно завершить.
+                    // В случае, если конфиг не найден нужно дополнить код созданием данного конфига
+                    // по пути "Assets/Resources/Settings.asset"
+                    // После создания сказать об этом в консоль и перевести фокус на него в редакторе,
+                    // а этот метод благополучно завершить.
+
+                    settings = ScriptableObject.CreateInstance<Runtime.Settings>();
+                    string filePath = System.IO.Path.Combine("Assets", "Resources", "Settings.Asset");
+
+                    AssetDatabase.CreateAsset( settings, filePath );
+                    AssetDatabase.SaveAssets();
+
+                    Debug.Log("Settings config is not found. New settings config was created at " + filePath);
+
+                    EditorGUIUtility.PingObject( settings );
 
                     return;
                 }
 
-                string sourceFolder = AssetDatabase.GetAssetPath( settings.folder );
+                string sourceFolder = AssetDatabase.GetAssetPath( settings.Folder );
                 if ( string.IsNullOrEmpty( sourceFolder ) )
                     return;
 
