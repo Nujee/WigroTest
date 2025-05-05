@@ -8,13 +8,6 @@ namespace Wigro.Editor
     [CustomEditor(typeof(Settings))]
     internal sealed class SettingsInspector : UnityEditor.Editor
     {
-        private enum InventoryFlags
-        {
-            OpenAnimated = 1 << 0,
-            CloseAnimated = 1 << 1,
-            ShowInfo = 1 << 2
-        }
-
         public override void OnInspectorGUI()
         {
             SerializedObject serializedSettings = new SerializedObject(target);
