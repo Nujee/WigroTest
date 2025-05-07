@@ -1,14 +1,14 @@
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using NUnit.Framework.Interfaces;
 
 [DisallowMultipleComponent]
-public sealed class InventorySlot : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+public sealed class Slot : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    public void Init()
+    public ItemData ItemData { get; private set; }
+
+    public void Init(ItemData itemData)
     {
-        //throw new System.NotImplementedException();
+        ItemData = itemData;
     }
 
     public void OnBeginDrag(PointerEventData eventData)

@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 486d1611a60cd6d45ab8c20aa74a5b1a, type: 3}
   m_Name: Settings
   m_EditorClassIdentifier: 
-  _folder: {fileID: 102900000, guid: 875c674c6821bab4bbd3b1a10aaa7c32, type: 3}
-  _amount: 40
+  _folder: {fileID: 102900000, guid: d7c26643cd4d47e49afa37a08b22ce11, type: 3}
+  _amount: 200
   _flags: 7

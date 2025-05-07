@@ -6,11 +6,11 @@ namespace Wigro.Runtime
     public sealed class EntryPoint : MonoBehaviour
     {
         [field: SerializeField] public Settings Settings { get; private set; }
-        [field: SerializeField] public Inventory Inventory {  get; private set; }
+        [field: SerializeField] public InventoryView InventoryView { get; private set; }
 
         private void Start()
         {
-            Inventory.Init(Settings);
+            var inventory = new Inventory().Init(Settings, InventoryView.Init(Settings));
         }
     }
 }

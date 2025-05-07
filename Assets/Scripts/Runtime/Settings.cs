@@ -11,7 +11,7 @@ namespace Wigro.Runtime
 
         public Object Folder => _folder;
         public int Amount => _amount;
-        public bool OpenAnimated { get => (_flags & (int) InventoryFlags.CloseAnimated) != 0; }
+        public bool OpenAnimated { get => (_flags & (int)InventoryFlags.OpenAnimated) != 0; }
         public bool CloseAnimated { get => (_flags & (int)InventoryFlags.CloseAnimated) != 0; }
         public bool ShowInfo { get => (_flags & (int)InventoryFlags.ShowInfo) != 0; }
     }

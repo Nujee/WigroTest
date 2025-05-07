@@ -1,23 +1,28 @@
-using Mono.Data.Sqlite;
-using System.Collections.Generic;
-using UnityEngine;
 using Wigro.Runtime;
 
-[DisallowMultipleComponent]
-public sealed class Inventory : MonoBehaviour
+public sealed class Inventory
 {
-    [field: SerializeField] public InventorySlot SlotPrefab { get; private set; }
-    [field: SerializeField] public RectTransform SlotsParent { get; private set; }
+    private Slot[] _slots;
+    private InventoryView _view;
 
-    public void Init(Settings settings)
+    public Inventory Init(Settings settings, InventoryView view)
     {
-        var slotsAmount = settings.Amount;
-        var slotPool = new GenericPool<InventorySlot>(SlotPrefab, slotsAmount, SlotsParent);
+        _view = view;
 
-        for (int i = 0; i < slotsAmount; ++i)
+        // var itemsBySlotIndex = TransformToInnerDataBase(outerDataBase);
+
+        var slotsAmount = settings.Amount;
+        _slots = new Slot[slotsAmount];
+        var slotPool = new GenericPool<Slot>(_view.SlotPrefab, slotsAmount, _view.SlotsParent);
+
+        for (int i = 0; i < slotsAmount; i++)
         {
+            //_slots.
             var slot = slotPool.Get();
-            slot.Init();
+            //slot.Init(itemsBySlotIndex[i]);
+            //_slots[i] = slot;
         }
+
+         return this;
     }
 }

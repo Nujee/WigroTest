@@ -41,11 +41,18 @@ namespace Wigro.Editor
             bool showInfo = (currentFlags & (int)InventoryFlags.ShowInfo) != 0;
             showInfo = EditorGUILayout.Toggle("Show Info", showInfo);
 
-            flagsProperty.intValue = 0;
+            int newFlags = 0;
 
-            if (openAnimated) flagsProperty.intValue |= (int)InventoryFlags.OpenAnimated;
-            if (closeAnimated) flagsProperty.intValue |= (int)InventoryFlags.CloseAnimated;
-            if (showInfo) flagsProperty.intValue |= (int)InventoryFlags.ShowInfo;
+            if (openAnimated) 
+                newFlags |= (int)InventoryFlags.OpenAnimated;
+
+            if (closeAnimated) 
+                newFlags |= (int)InventoryFlags.CloseAnimated;
+
+            if (showInfo) 
+                newFlags |= (int)InventoryFlags.ShowInfo;
+
+            flagsProperty.intValue = newFlags;
 
             serializedSettings.ApplyModifiedProperties();
         }
