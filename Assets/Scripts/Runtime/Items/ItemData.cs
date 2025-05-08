@@ -1,10 +1,10 @@
-using UnityEngine;
-
-public sealed class ItemData
+namespace Wigro.Runtime
 {
-    public ItemType Type;
-    public int SlotID;
-    public string Name;
-    public ItemRarity Rarity;
-    public Sprite Icon;
+    public struct ItemData
+    {
+        public int Id;
+        public string ItemId;
+        public int Rarity;
+        public int Flags;
+    }
 }

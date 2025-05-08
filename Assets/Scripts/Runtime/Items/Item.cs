@@ -1,7 +1,14 @@
-[System.Serializable]
-public class Item
+namespace Wigro.Runtime
 {
-    public string ItemID;
-    public int Rarity;   
-    public int Flags;    
+    public sealed class Item
+    {
+        public ItemView View { get; private set; }
+        public ItemData Data { get; private set; }
+
+        public Item(ItemView view, ItemData data)
+        {
+            View = view;
+            Data = data;
+        }
+    }
 }
