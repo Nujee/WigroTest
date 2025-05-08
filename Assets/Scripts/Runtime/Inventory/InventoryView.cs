@@ -1,35 +1,44 @@
 using UnityEngine;
 using UnityEngine.UI;
-using Wigro.Runtime;
 
-[DisallowMultipleComponent]
-public sealed class InventoryView : MonoBehaviour
+namespace Wigro.Runtime
 {
-    private bool _isOpen;
-
-    [field: SerializeField] public RectTransform MainPanel { get; private set; }
-    [field: SerializeField] public Button ToggleInventoryButton { get; private set; }
-    [field: SerializeField] public RectTransform HiddenTransform { get; private set; }
-    [field: SerializeField] public RectTransform ShownTransform { get; private set; }
-    [field: SerializeField] public RectTransform SlotsParent { get; private set; }
-    [field: SerializeField] public Slot SlotPrefab { get; private set; }
-
-    public InventoryView Init(Settings settings)
+    [DisallowMultipleComponent]
+    public sealed class InventoryView : MonoBehaviour
     {
-        MainPanel.transform.position = HiddenTransform.position;
+        [field: SerializeField] public Canvas Canvas { get; private set; }
+        [field: SerializeField] public InfoView InfoView { get; private set; }
+        [field: SerializeField] public RectTransform MainPanel { get; private set; }
+        [field: SerializeField] public Button ToggleInventoryButton { get; private set; }
+        [field: SerializeField] public RectTransform HiddenTransform { get; private set; }
+        [field: SerializeField] public RectTransform ShownTransform { get; private set; }
+        [field: SerializeField] public RectTransform SlotsParent { get; private set; }
+        [field: SerializeField] public SlotView SlotPrefab { get; private set; }
+        [field: SerializeField] public ItemView ItemPrefab { get; private set; }
 
-        ToggleInventoryButton.onClick.AddListener(ToggleInventoryState);
-        return this;
+        private bool _isOpen;
+        private (bool onOpen, bool onClose) _doAnimate;
 
-        async void ToggleInventoryState()
+        public InventoryView Init((bool onOpen, bool onClose) doAnimate)
         {
-            var targetPosition = _isOpen 
-                ? HiddenTransform.position 
+            _doAnimate = doAnimate;
+
+            MainPanel.transform.position = HiddenTransform.position;
+
+            ToggleInventoryButton.onClick.AddListener(ToggleInventoryState);
+
+            return this;
+        }
+
+        private async void ToggleInventoryState()
+        {
+            var targetPosition = _isOpen
+                ? HiddenTransform.position
                 : ShownTransform.position;
 
-            var shouldAnimate = _isOpen 
-                ? settings.CloseAnimated 
-                : settings.OpenAnimated;
+            var shouldAnimate = _isOpen
+                ? _doAnimate.onClose
+                : _doAnimate.onOpen;
 
             _isOpen = !_isOpen;
 
@@ -38,10 +47,10 @@ public sealed class InventoryView : MonoBehaviour
             else
                 MainPanel.transform.position = targetPosition;
         }
-    }
 
-    private void OnDestroy()
-    {
-        ToggleInventoryButton.onClick.RemoveAllListeners();
+        private void OnDestroy()
+        {
+            ToggleInventoryButton.onClick.RemoveAllListeners();
+        }
     }
 }

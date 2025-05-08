@@ -1,3 +1,6 @@
+using Mono.Data.Sqlite;
+using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 namespace Wigro.Runtime
@@ -10,7 +13,7 @@ namespace Wigro.Runtime
 
         private void Start()
         {
-            var inventory = new Inventory().Init(Settings, InventoryView.Init(Settings));
+            new Inventory(Settings, InventoryView);
         }
     }
 }
