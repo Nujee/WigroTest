@@ -8,7 +8,8 @@ namespace Wigro.Runtime
     public sealed class Inventory : IDisposable
     {
         private readonly List<Slot> _slots = new();
-        private InventoryView _view; 
+        private InventoryView _view;
+        private GenericPool<ItemView> _itemViewPool;
 
         public Inventory(Settings settings, InventoryView view)
         {
@@ -19,7 +20,7 @@ namespace Wigro.Runtime
             var slotViewPool = new GenericPool<SlotView>(_view.SlotPrefab, slotsAmount, _view.SlotsParent);
 
             var itemDatas = new InnerDatabase(settings).ItemDatas;
-            var itemViewPool = new GenericPool<ItemView>(_view.ItemPrefab, itemDatas.Count);
+            _itemViewPool = new GenericPool<ItemView>(_view.ItemPrefab, itemDatas.Count);
 
             for (var i = 0; i < slotsAmount; i++)
             {
@@ -40,74 +41,120 @@ namespace Wigro.Runtime
                 var hasItemsRemaining = (i < itemDatas.Count);
                 if (hasItemsRemaining)
                 {
-                    var itemView = itemViewPool.Get();
+                    var itemView = _itemViewPool.Get(); //.Init();
+                    itemView.Icon.sprite = _view.IconSprites[UnityEngine.Random.Range(0, _view.IconSprites.Count)];
                     itemView.transform.SetParent(slotView.transform);
                     itemView.transform.localPosition = Vector2.zero;
 
                     var itemData = itemDatas[i];
 
                     item = new Item(itemView, itemData);
+                    slot.SetItem(item);
                 }
-
-                // Append item to slot
-                slot.SetItem(item);
             }
         }
 
-        private void OnSlotClick(Slot sourceSlot, PointerEventData data)
+        private void OnSlotClick(Slot slot, PointerEventData data)
         {
             // add frame to slot
             // update info values
             _view.InfoView.gameObject.SetActive(true);
         }
 
-        private void OnSlotDragBegin(Slot sourceSlot, PointerEventData data)
+        private void OnSlotDragBegin(Slot slot, PointerEventData data)
         {
-            if (sourceSlot.IsEmpty)
+            if (slot.IsEmpty)
                 return;
 
-            var iconTransform = sourceSlot.Item.View.Icon.transform;
-            iconTransform.SetParent(_view.Canvas.transform, worldPositionStays: true);
-            iconTransform.position = data.position;
+            var itemTransform = slot.Item.View.transform;
+            itemTransform.SetParent(_view.Canvas.transform, worldPositionStays: true);
+            itemTransform.position = data.position;
 
             _view.InfoView.gameObject.SetActive(false);
         }
 
-        private void OnSlotDrag(Slot sourceSlot, PointerEventData data)
+        private void OnSlotDrag(Slot slot, PointerEventData data)
         {
-            if (sourceSlot.IsEmpty)
+            if (slot.IsEmpty)
                 return;
 
-            var iconTransform = sourceSlot.Item.View.Icon.transform;
-            iconTransform.position = data.position;
+            var itemTransform = slot.Item.View.transform;
+            itemTransform.position = data.position;
         }
 
-        private void OnSlotDragEnd(Slot slot, PointerEventData data)
+        private void OnSlotDragEnd(SlotView sourceView, PointerEventData data)
         {
-            if (slot.IsEmpty) 
+            var fromSlot = sourceView.Slot;
+
+            if (fromSlot.IsEmpty) 
                 return;
 
-            var temp = slot.Item;
-            //otherSlot
+            var raycastResults = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(data, raycastResults);
 
-            //if (slot.IsEmpty)
-            //{
-            //    slot.SetItem(_draggedItem);
-            //}
-            //else
-            //{
-            //    var temp = slot.Item;
-            //    slot.SetItem(_draggedItem);
-            //    _draggedSlot.SetItem(temp);
-            //}
+            var uiUnderCursor = raycastResults.Count > 0 
+                ? raycastResults[0].gameObject 
+                : null;
 
-            //// Вернуть иконку на своё место
-            //_draggedItem.View.transform.SetParent(_draggedSlot.transform);
-            //_draggedItem.View.transform.localPosition = Vector3.zero;
+            var targetView = uiUnderCursor?.GetComponentInParent<SlotView>();
+            var isClickOutsideInventoryPanel =
+                !RectTransformUtility.RectangleContainsScreenPoint(_view.MainPanel, data.position, _view.Canvas.worldCamera);
 
-            //// Очистить состояние
-            //_draggedSlot = null;
-            //_draggedItem = null;
+            if (targetView != null && targetView != sourceView)
+                if (targetView.Slot.IsEmpty)
+                    MoveItem(sourceView, targetView);
+                else
+                    SwapItems(sourceView, targetView);
+
+            else if (isClickOutsideInventoryPanel)
+                RemoveItem(fromSlot);
+
+            else
+                ReturnItem(sourceView);
+        }
+
+        private void MoveItem(SlotView sourceView, SlotView targetView)
+        {
+            var sourceSlot = sourceView.Slot;
+            var targetSlot = targetView.Slot;
+
+            var sourceItemTransform = sourceSlot.Item.View.transform;
+            sourceItemTransform.SetParent(targetView.transform);
+            sourceItemTransform.localPosition = Vector2.zero;
+
+            targetSlot.SetItem(sourceSlot.Item);
+            sourceSlot.Clear();
+        }
+
+        private void SwapItems(SlotView sourceView, SlotView targetView)
+        {
+            var sourceSlot = sourceView.Slot;
+            var targetSlot = targetView.Slot;
+
+            var sourceItemTransform = sourceSlot.Item.View.transform;
+            sourceItemTransform.SetParent(targetView.transform);
+            sourceItemTransform.localPosition = Vector2.zero;
+
+            var targetItemTransform = targetSlot.Item.View.transform;
+            targetItemTransform.SetParent(sourceView.transform);
+            targetItemTransform.localPosition = Vector2.zero;
+
+            var temp = targetSlot.Item;
+            targetSlot.SetItem(sourceSlot.Item);
+            sourceSlot.SetItem(temp);   
+        }
+
+        private void RemoveItem(Slot slot)
+        {
+            _itemViewPool.Release(slot.Item.View);
+            slot.Clear();
+        }
+
+        private void ReturnItem(SlotView sourceView)
+        {
+            var itemTransform = sourceView.Slot.Item.View.transform;
+            itemTransform.SetParent(sourceView.transform, true);
+            itemTransform.localPosition = Vector2.zero;
         }
 
         public void Dispose()
