@@ -17,12 +17,12 @@ namespace Wigro.Runtime
 
         public Slot Slot { get; private set; }
 
+        public void Init(Slot slot) => Slot = slot;
+
         public Action<Slot, PointerEventData> OnClicked = delegate { };
         public Action<Slot, PointerEventData> OnDragBegun = delegate { };
         public Action<Slot, PointerEventData> OnDragInProcess = delegate { };
-        public Action<Slot, PointerEventData> OnDragEnded = delegate { };
-
-        public void Init(Slot slot) => Slot = slot;
+        public Action<SlotView, PointerEventData> OnDragEnded = delegate { };
 
         public void OnPointerClick(PointerEventData eventData) => OnClicked(Slot, eventData);
                                                                             
@@ -30,6 +30,6 @@ namespace Wigro.Runtime
                                                                             
         public void OnDrag(PointerEventData eventData) => OnDragInProcess(Slot, eventData);
                                                                           
-        public void OnEndDrag(PointerEventData eventData) => OnDragEnded(Slot, eventData);
+        public void OnEndDrag(PointerEventData eventData) => OnDragEnded(this, eventData);
     }
 }

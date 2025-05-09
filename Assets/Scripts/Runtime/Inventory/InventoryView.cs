@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,6 +16,7 @@ namespace Wigro.Runtime
         [field: SerializeField] public RectTransform SlotsParent { get; private set; }
         [field: SerializeField] public SlotView SlotPrefab { get; private set; }
         [field: SerializeField] public ItemView ItemPrefab { get; private set; }
+        [field: SerializeField] public List<Sprite> IconSprites { get; private set; }
 
         private bool _isOpen;
         private (bool onOpen, bool onClose) _doAnimate;
