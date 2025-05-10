@@ -1,7 +1,8 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
-public static class CustomTweens
+public static class Extensions
 {
     public static async Task LinearMoveTo(this Transform transform, Vector3 endPoint, float duration)
     {
@@ -18,5 +19,21 @@ public static class CustomTweens
         }
 
         transform.position = endPoint;
+    }
+
+    public static bool TryGetKeyByValue<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, 
+        TValue value, out TKey key)
+    {
+        foreach (var pair in dictionary)
+        {
+            if (EqualityComparer<TValue>.Default.Equals(pair.Value, value))
+            {
+                key = pair.Key;
+                return true;
+            }
+        }
+
+        key = default;
+        return false;
     }
 }
