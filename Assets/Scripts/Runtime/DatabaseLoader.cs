@@ -5,14 +5,14 @@ using UnityEngine;
 
 namespace Wigro.Runtime
 {
-    public sealed class InnerDatabase
+    public sealed class DatabaseLoader
     {
-        public List<ItemData> ItemDatas { get; private set; }
+        public List<ItemData> Database { get; private set; }
 
-        public InnerDatabase(Settings settings) => ItemDatas = LoadFromOuterDatabase(settings);
+        public DatabaseLoader() => Database = LoadDatabase();
 
         // 9)
-        public List<ItemData> LoadFromOuterDatabase(Settings settings)
+        public List<ItemData> LoadDatabase()
         {
             string dbPath = Path.Combine(Application.streamingAssetsPath, "items.bytes");
 
@@ -33,8 +33,7 @@ namespace Wigro.Runtime
             var itemDatas = new List<ItemData>();
 
             // 10)
-            int count = 0;
-            while (reader.Read() && count < settings.Amount)
+            while (reader.Read())
             {
                 var item = new ItemData
                 {
@@ -45,7 +44,6 @@ namespace Wigro.Runtime
                 };
 
                 itemDatas.Add(item);
-                count++;
             }
 
             return itemDatas;
