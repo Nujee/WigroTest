@@ -378,7 +378,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Settings>k__BackingField: {fileID: 11400000, guid: a73f277be073a8f49a91262c0880b6ad, type: 2}
-  <InventoryView>k__BackingField: {fileID: 1588792543}
+  <View>k__BackingField: {fileID: 1588792543}
 --- !u!4 &286679628
 Transform:
   m_ObjectHideFlags: 0
@@ -1336,16 +1336,16 @@ MonoBehaviour:
   <SlotsParent>k__BackingField: {fileID: 1835829829}
   <SlotPrefab>k__BackingField: {fileID: 6370228977991579705, guid: 4f9d5093ccbbf2143bca684dd30e9674, type: 3}
   <ItemPrefab>k__BackingField: {fileID: 2639840742096271897, guid: 4ef8e62bd12369b4bb81b371853b962e, type: 3}
-  <IconSprites>k__BackingField:
+  <ItemSprites>k__BackingField:
   - {fileID: 21300000, guid: 76beef9fdae7b48468ddf07d0400a374, type: 3}
-  - {fileID: 21300000, guid: cee9dbe90b270c944ae1dabf41c93b10, type: 3}
+  - {fileID: 21300000, guid: 89930da27dfbbc64ba1f3baf0ae416bb, type: 3}
   - {fileID: 21300000, guid: ddf2e76e8a1f88f46ae1e42277850b48, type: 3}
   - {fileID: 21300000, guid: 17fa84703485d314b8d6b5216987d4b1, type: 3}
   - {fileID: 21300000, guid: 55ad4b6109677be42b239f450ce98c29, type: 3}
-  - {fileID: 21300000, guid: 803b0b9bfc1fd824aae8423bfbab83b4, type: 3}
+  - {fileID: 21300000, guid: 2d95cf258837ba44896030e25b9f2dd7, type: 3}
   - {fileID: 21300000, guid: 0da63bf69e254aa4a83c345c3de497c8, type: 3}
   - {fileID: 21300000, guid: 66fa19194577350438c952106f661c2f, type: 3}
-  - {fileID: 21300000, guid: 66fa19194577350438c952106f661c2f, type: 3}
+  - {fileID: 21300000, guid: ed5ce024c84dbdb42ac5037d03e7c039, type: 3}
 --- !u!1 &1643481304
 GameObject:
   m_ObjectHideFlags: 0

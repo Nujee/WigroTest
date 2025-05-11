@@ -14,44 +14,86 @@ namespace Wigro.Runtime
             _view = view;
         }
 
-        public void Do(int inventorySize, List<ItemData> database)
+        public void Init(int inventorySize, List<ItemData> database)
         {
-            // create slot models
             _model.CreateSlots(inventorySize);
 
-            // 1) setup slotId -> slotView dict in _view
-            // 2) tell view to update visual on item set in model
             foreach (var slot in _model.Slots)
             {
-                _view.SetupSlotViewById(slot.Id);
-                slot.OnItemSet += OnItemSetToSlot;
+                _view.SetupSlotView(slot.Id);
+                slot.OnItemSet += HandleItemSet;
             }
 
-            // 3) create item models
             _model.CreateItems(database);
 
-            // 4) setup itemId -> itemView dict in _view
             foreach (var item in database)
-                _view.SetupItemViewById(item.ItemId);
+                _view.SetupItemView(item.ItemId);
 
-            // 5) slot.setItem(item)
             _model.SetItemsToSlots();
 
-            // 6) slot.attachedItem.Onremove += pool.release
-            foreach (var slot in _model.Slots)
-            {
-                if (slot.IsEmpty)
-                    continue;
-
-                slot.AttachedItem.OnRemove += OnItemRemove;
-            }
-
-            _view.OnDrag += HandleOnDrag;
+            _view.OnClick += HandleClick;
+            _view.OnBeginDrag += HandleBeginDrag;
+            _view.OnDrag += HandleDrag;
+            _view.OnEndDragOutsideInventory += HandleEndDragOutsideInventory;
+            _view.OnEndDragInDifferentSlot += HandleEndDragInDifferentSlot;
+            _view.OnEndDragReset += HandleEndDragReset;
         }
 
-        private void HandleOnDrag(slotvi)
+        private void HandleClick(int sourceSlotId)
+        {
 
-        private void OnItemSetToSlot(SlotModel slot)
+        }
+
+        private void HandleBeginDrag(int sourceSlotId)
+        {
+            if (!TryGetItemIdBySlotId(sourceSlotId, out var itemId))
+                return;
+
+            _view.BeginDragItem(itemId);
+        }
+
+        private void HandleDrag(int sourceSlotId)
+        {
+            if (!TryGetItemIdBySlotId(sourceSlotId, out var itemId))
+                return;
+
+            _view.DragItem(itemId);
+        }
+
+        private void HandleEndDragOutsideInventory(int sourceSlotId)
+        {
+            if (!TryGetSlotModelBySlotId(sourceSlotId, out var sourceSlot) ||
+                !TryGetItemIdBySlotId(sourceSlotId, out var itemId))
+                return;
+
+            _model.RemoveItem(sourceSlot);
+            _view.RemoveItemView(itemId);
+        }
+
+        private void HandleEndDragInDifferentSlot(int sourceSlotId, int targetSlotId)
+        {
+            if (!TryGetSlotModelBySlotId(sourceSlotId, out var sourceSlot) ||
+                !TryGetSlotModelBySlotId(targetSlotId, out var targetSlot))
+                return;
+
+            if (sourceSlot.IsEmpty)
+                return;
+
+            if (targetSlot.IsEmpty)
+                _model.MoveItem(sourceSlot, targetSlot);
+            else
+                _model.SwapItems(sourceSlot, targetSlot);
+        }
+
+        private void HandleEndDragReset(int sourceSlotId)
+        {
+            if (!TryGetSlotModelBySlotId(sourceSlotId, out var sourceSlot))
+                return;
+
+            _model.ResetItem(sourceSlot);
+        }
+
+        private void HandleItemSet(SlotModel slot)
         {
             if (slot.IsEmpty)
                 return;
@@ -60,71 +102,47 @@ namespace Wigro.Runtime
             _view.AttachItemViewToSlotView(slot.Id, itemId);
         }
 
-        private void OnItemRemove(ItemModel item)
+        private bool TryGetItemIdBySlotId(int slotId, out string itemId)
         {
-            _view.ReleaseItemViewToPool(item.Data.ItemId);
+            var doesSlotExistAndNonEmpty =
+                TryGetSlotModelBySlotId(slotId, out var slot) && !slot.IsEmpty;
+
+            if (doesSlotExistAndNonEmpty)
+            {
+                itemId = slot.AttachedItem.Data.ItemId;
+                return true;
+            }
+
+            itemId = string.Empty;
+            return false;
         }
 
-        public void ProcessDrop()
+        private bool TryGetSlotModelBySlotId(int slotId, out SlotModel slotModel)
         {
-
-
-            if (isItemActive)
+            foreach (var slot in _model.Slots)
             {
-                if (didHitDifferentSlot)
+                if (slot.Id == slotId)
                 {
-                    if (isTargetSlotEmpty)
-                    {
-                        Move();
-                    }
-
-                    else
-                    {
-                        Swap();
-                    }
-                }
-                else
-                {
-                    Fallback();
+                    slotModel = slot;
+                    return true;
                 }
             }
-            else
-            {
-                Remove();
-            }
 
-
-
-
-            if (doRemove)
-            {
-                Remove();
-                return;
-            }
-
-            if (didHitDifferentSlot)
-            {
-                if (isTargetSlotEmpty) 
-                    Move();
-                else 
-                    Swap();
-            }
-            else ;
-        }
-
-        public void RemoveOrReturn()
-        {
-
-        }
-
-        public void DropItem()
-        {
-
+            slotModel = null;
+            return false;
         }
 
         public void Dispose()
         {
+            foreach (var slot in _model.Slots)
+                slot.OnItemSet -= HandleItemSet;
 
+            _view.OnClick -= HandleClick;
+            _view.OnBeginDrag -= HandleBeginDrag;
+            _view.OnDrag -= HandleDrag;
+            _view.OnEndDragOutsideInventory -= HandleEndDragOutsideInventory;
+            _view.OnEndDragInDifferentSlot -= HandleEndDragInDifferentSlot;
+            _view.OnEndDragReset -= HandleEndDragReset;
         }
     }
 }

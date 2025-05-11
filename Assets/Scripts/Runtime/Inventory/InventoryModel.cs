@@ -40,63 +40,28 @@ namespace Wigro.Runtime
             }
         }
 
-        public void DropItem(SlotModel sourceSlot, SlotModel targetSlot, bool isDifferentSlot, bool doRemoveItem)
-        {
-            if (isDifferentSlot)
-            {
-                if (targetSlot.IsEmpty)
-                {
-                    MoveItem(sourceSlot, targetSlot);
-                }
-                else
-                {
-                    SwapItems(sourceSlot, targetSlot);
-                }
-            }
-            else if (doRemoveItem)
-            {
-                RemoveItem(sourceSlot);
-            }
-            else
-            {
-                ReturnItem(sourceSlot);
-            }
-
-
-            if (targetSlot.IsEmpty)
-            {
-                MoveItem(sourceSlot, targetSlot);
-            }
-            else if (doRemoveItem)
-            {
-                RemoveItem(sourceSlot);
-            }
-            else
-            {
-                SwapItems(sourceSlot, targetSlot);
-            }
-        }
-
-        private void MoveItem(SlotModel sourceSlot, SlotModel targetSlot)
+        // 6) b) II)
+        public void MoveItem(SlotModel sourceSlot, SlotModel targetSlot)
         {
             targetSlot.SetItem(sourceSlot.AttachedItem);
             sourceSlot.Clear();
         }
 
-        private void SwapItems(SlotModel sourceSlot, SlotModel targetSlot)
+        // 6) b) II)
+        public void SwapItems(SlotModel sourceSlot, SlotModel targetSlot)
         {
             var temp = targetSlot.AttachedItem;
             targetSlot.SetItem(sourceSlot.AttachedItem);
             sourceSlot.SetItem(temp);   
         }
 
-        private void RemoveItem(SlotModel slot)
+        // 6) b) III)
+        public void RemoveItem(SlotModel slot)
         {
-            slot.AttachedItem.Remove();
             slot.Clear();
         }
 
-        private void ReturnItem(SlotModel slot)
+        public void ResetItem(SlotModel slot)
         {
             slot.SetItem(slot.AttachedItem);
         }

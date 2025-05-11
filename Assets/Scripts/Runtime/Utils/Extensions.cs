@@ -2,38 +2,41 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
-public static class Extensions
+namespace Wigro.Runtime
 {
-    public static async Task LinearMoveTo(this Transform transform, Vector3 endPoint, float duration)
+    public static class Extensions
     {
-        var startPoint = transform.position;
-        var elapsed = 0f;
-
-        while (elapsed < duration)
+        public static async Task LinearMoveTo(this Transform transform, Vector3 endPoint, float duration)
         {
-            var t = elapsed / duration;
-            transform.position = Vector3.Lerp(startPoint, endPoint, t);
-            elapsed += Time.deltaTime;
+            var startPoint = transform.position;
+            var elapsed = 0f;
 
-            await Task.Yield();
-        }
-
-        transform.position = endPoint;
-    }
-
-    public static bool TryGetKeyByValue<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, 
-        TValue value, out TKey key)
-    {
-        foreach (var pair in dictionary)
-        {
-            if (EqualityComparer<TValue>.Default.Equals(pair.Value, value))
+            while (elapsed < duration)
             {
-                key = pair.Key;
-                return true;
+                var t = elapsed / duration;
+                transform.position = Vector3.Lerp(startPoint, endPoint, t);
+                elapsed += Time.deltaTime;
+
+                await Task.Yield();
             }
+
+            transform.position = endPoint;
         }
 
-        key = default;
-        return false;
+        public static bool TryGetKeyByValue<TKey, TValue>(this IDictionary<TKey, TValue> dictionary,
+            TValue value, out TKey key)
+        {
+            foreach (var pair in dictionary)
+            {
+                if (EqualityComparer<TValue>.Default.Equals(pair.Value, value))
+                {
+                    key = pair.Key;
+                    return true;
+                }
+            }
+
+            key = default;
+            return false;
+        }
     }
 }

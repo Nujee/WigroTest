@@ -12,17 +12,17 @@ namespace Wigro.Runtime
         [field: SerializeField] public Image Background { get; private set; }
         [field: SerializeField] public Color NeutralColor { get; private set; }
 
-        public event Action<SlotView, PointerEventData> OnClicked = delegate { };
-        public event Action<SlotView, PointerEventData> OnDragBegun = delegate { };
+        public event Action<SlotView, PointerEventData> OnClickEvent = delegate { };
+        public event Action<SlotView, PointerEventData> OnBeginDragEvent = delegate { };
         public event Action<SlotView, PointerEventData> OnDragEvent = delegate { };
-        public event Action<SlotView, PointerEventData> OnDragEnded = delegate { };
+        public event Action<SlotView, PointerEventData> OnEndDragEvent = delegate { };
 
-        public void OnPointerClick(PointerEventData eventData) => OnClicked(this, eventData);
+        public void OnPointerClick(PointerEventData eventData) => OnClickEvent(this, eventData);
 
-        public void OnBeginDrag(PointerEventData eventData) => OnDragBegun(this, eventData);
+        public void OnBeginDrag(PointerEventData eventData) => OnBeginDragEvent(this, eventData);
 
         public void OnDrag(PointerEventData eventData) => OnDragEvent(this, eventData);
 
-        public void OnEndDrag(PointerEventData eventData) => OnDragEnded(this, eventData);
+        public void OnEndDrag(PointerEventData eventData) => OnEndDragEvent(this, eventData);
     }
 }

@@ -10,13 +10,16 @@ namespace Wigro.Runtime
 
         private void Start()
         {
+            // 9)
             var database = new DatabaseLoader().Database;
             var doAnimate = (Settings.OpenAnimated, Settings.CloseAnimated);
             var inventorySize = Settings.Amount;
 
             var model = new InventoryModel();
             var presenter = new InventoryPresenter(model, View);
-            View.Init(presenter, doAnimate);
+
+            View.Init(doAnimate, inventorySize, database.Count);
+            presenter.Init(inventorySize, database);
         }
     }
 }

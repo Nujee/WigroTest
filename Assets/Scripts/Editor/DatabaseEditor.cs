@@ -24,11 +24,7 @@ namespace Wigro.Editor
                 }
                 else
                 {
-                    // В случае, если конфиг не найден нужно дополнить код созданием данного конфига
-                    // по пути "Assets/Resources/Settings.asset"
-                    // После создания сказать об этом в консоль и перевести фокус на него в редакторе,
-                    // а этот метод благополучно завершить.
-
+                    // 4)
                     settings = ScriptableObject.CreateInstance<Runtime.Settings>();
                     string filePath = System.IO.Path.Combine("Assets", "Resources", "Settings.Asset");
 

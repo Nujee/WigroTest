@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor.Graphs;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -13,12 +12,15 @@ namespace Wigro.Runtime
         private readonly Dictionary<int, SlotView> _slotViewsById = new();
         private readonly Dictionary<string, ItemView> _itemViewsById = new();
 
-        private InventoryPresenter _presenter;
         private bool _isOpen;
         private (bool onOpen, bool onClose) _doAnimate;
 
         private GenericPool<SlotView> _slotViewPool;
         private GenericPool<ItemView> _itemViewPool;
+
+        private PointerEventData _lastClickEventData;
+        private PointerEventData _lastBeginDragEventData;
+        private PointerEventData _lastDragEventData;
 
         [field: SerializeField] public Canvas Canvas { get; private set; }
         [field: SerializeField] public InfoView InfoView { get; private set; }
@@ -31,11 +33,15 @@ namespace Wigro.Runtime
         [field: SerializeField] public ItemView ItemPrefab { get; private set; }
         [field: SerializeField] public List<Sprite> ItemSprites { get; private set; }
 
-        public event Action<SlotView, PointerEventData> OnDrag = delegate { };
+        public event Action<int> OnClick = delegate { };
+        public event Action<int> OnBeginDrag = delegate { };
+        public event Action<int> OnDrag = delegate { };
+        public event Action<int> OnEndDragOutsideInventory = delegate { };
+        public event Action<int, int> OnEndDragInDifferentSlot = delegate { };
+        public event Action<int> OnEndDragReset = delegate { };
 
-        public InventoryView Init(InventoryPresenter presenter, (bool onOpen, bool onClose) doAnimate, int inventorySize, int itemsCount)
+        public InventoryView Init((bool onOpen, bool onClose) doAnimate, int inventorySize, int itemsCount)
         {
-            _presenter = presenter;
             _doAnimate = doAnimate;
 
             _slotViewPool = new GenericPool<SlotView>(SlotPrefab, inventorySize, SlotsParent);
@@ -48,39 +54,24 @@ namespace Wigro.Runtime
             return this;
         }
 
-        public void SetupSlotViewById(int slotId)
+        public void SetupSlotView(int slotId)
         {
             var slotView = _slotViewPool.Get();
 
             _slotViewsById[slotId] = slotView;
 
-            slotView.OnClicked += OnSlotClick;
-            slotView.OnDragBegun += OnSlotDragBegin;
+            slotView.OnClickEvent += OnClickProxy;
+            slotView.OnBeginDragEvent += OnBeginDragProxy;
             slotView.OnDragEvent += OnDragProxy;
-            slotView.OnDragEnded += OnSlotDragEnd;
+            slotView.OnEndDragEvent += OnEndDragProxy;
         }
 
-        public void SetupItemViewById(string itemId)
+        public void SetupItemView(string itemId)
         {
-            var randomSprite = ItemSprites[Random.Range(0, ItemSprites.Count)];
+            var randomSprite = ItemSprites[UnityEngine.Random.Range(0, ItemSprites.Count)];
             var itemView = _itemViewPool.Get().Init(randomSprite);
 
             _itemViewsById[itemId] = itemView;
-        }
-
-        public void SetupItemViewsById(List<ItemData> database)
-        {
-            var itemsCount = database.Count;
-            _itemViewPool = new GenericPool<ItemView>(ItemPrefab, itemsCount);
-
-            for (var i = 0; i < itemsCount; i++)
-            {
-                var randomSprite = ItemSprites[Random.Range(0, ItemSprites.Count)];
-                var itemView = _itemViewPool.Get().Init(randomSprite);
-
-                var itemData = database[i];
-                _itemViewsById[itemData.ItemId] = itemView;
-            }
         }
 
         public void AttachItemViewToSlotView(int slotId, string itemId)
@@ -92,7 +83,7 @@ namespace Wigro.Runtime
             itemView.transform.localPosition = Vector2.zero;
         }
 
-        public void ReleaseItemViewToPool(string itemId)
+        public void RemoveItemView(string itemId)
         {
             var itemView = _itemViewsById[itemId];
 
@@ -100,96 +91,124 @@ namespace Wigro.Runtime
             _itemViewPool.Release(itemView);
         }
 
+        public void ClickSlot(int slotId)
+        {
+
+        }
+
+        public void BeginDragItem(string itemId)
+        {
+            var itemTransform = _itemViewsById[itemId].transform;
+            itemTransform.SetParent(Canvas.transform, worldPositionStays: true);
+            itemTransform.position = _lastBeginDragEventData.position;
+        }
+
+        public void DragItem(string itemId)
+        {
+            var itemTransform = _itemViewsById[itemId].transform;
+            itemTransform.position = _lastDragEventData.position;
+        }
+
         private void OnSlotClick(SlotView view, PointerEventData data)
         {
             // slot frame - on
-            // info view - on
+            // info view - settings.showinfo ? {on and update} : {}
         }
 
-        private void OnSlotDragBegin(SlotView slotView, PointerEventData data)
+        private void OnClickProxy(SlotView slotView, PointerEventData data)
         {
-            var itemTransform = GetItemTransform(slotView.Slot);
-            itemTransform.SetParent(Canvas.transform, worldPositionStays: true);
-            itemTransform.position = data.position;
+            //if (!_slotViewsById.TryGetKeyByValue(slotView, out var slotId))
+            //    return;
+
+            //_lastClickEventData = data;
+            //OnBeginDrag(slotId);
+        }
+
+        private void OnBeginDragProxy(SlotView slotView, PointerEventData data)
+        {
+            if (!_slotViewsById.TryGetKeyByValue(slotView, out var slotId))
+                return;
+
+            _lastBeginDragEventData = data;
+            OnBeginDrag(slotId);
 
             //TODO: centralize infoview logic
             //InfoView.gameObject.SetActive(false); 
         }
 
-        private void OnDragProxy(SlotView slotView, PointerEventData data)// => OnDrag(slotView, data);
+        private void OnDragProxy(SlotView slotView, PointerEventData data)
         {
             if (!_slotViewsById.TryGetKeyByValue(slotView, out var slotId))
                 return;
 
+            _lastDragEventData = data;
             OnDrag(slotId);
-
-            var itemId = slotView.Slot.AttachedItem.Data.ItemId;
-            var itemTransform = _itemViewsById[itemId].transform;
-
-            itemTransform.position = data.position;
         }
 
-        private void OnSlotDragEnd(SlotView sourceSlotView, PointerEventData data)
+        private void OnEndDragProxy(SlotView sourceSlotView, PointerEventData data)
         {
-            if (IsInsideInventoryPanel())
+            if (!_slotViewsById.TryGetKeyByValue(sourceSlotView, out var sourceSlotId))
+                return;
+
+            if (IsOutsideInventory())
             {
-                if (TryGetFirstHit(out var firstHit))
-                {
-                    if (TryGetSlotView(out var targetSlotView))
-                    {
-                        if (targetSlotView.Slot.IsEmpty)
-                        {
-                            Move();
-                        }
-                        else if (targetSlotView != sourceSlotView)
-                        {
-                            Swap();
-                        }
-                        else
-                        {
-                            Return();
-                        }
-                    }
-                    else
-                    {
-                        Return ();
-                    }
-                }
-                else
-                {
-                    Return();
-                }
-            }
-            else
-            {
-                Remove();
+                OnEndDragOutsideInventory(sourceSlotId);
+                return;
             }
 
-            var a = IsInsideInventoryPanel();
-            var b = GetFirstHit();
-            var c = GetSlotView(b);
+            SlotView targetSlotView = null;
+            bool didHitDifferentSlot = TryRaycastHit(out var firstHit) &&
+                                       TryGetSlotView(firstHit, out targetSlotView) &&
+                                       IsDifferentSlotView(sourceSlotView, targetSlotView);
 
-            _presenter.ProcessDrop(a, b, c);
-
-            bool IsInsideInventoryPanel()
+            if (didHitDifferentSlot)
             {
-                return RectTransformUtility.RectangleContainsScreenPoint(MainPanel, data.position, Canvas.worldCamera);
+                if (!_slotViewsById.TryGetKeyByValue(targetSlotView, out var targetSlotId))
+                    return;
+
+                OnEndDragInDifferentSlot(sourceSlotId, targetSlotId);
+                return;
             }
 
-            GameObject GetFirstHit()
+            OnEndDragReset(sourceSlotId);
+
+            bool IsOutsideInventory()
+            {
+                return !RectTransformUtility.RectangleContainsScreenPoint(MainPanel, data.position, Canvas.worldCamera);
+            }
+
+            bool TryRaycastHit(out GameObject firstHit)
             {
                 var raycastResults = new List<RaycastResult>();
                 EventSystem.current.RaycastAll(data, raycastResults);
-                return raycastResults[0].gameObject;
+
+                if (raycastResults.Count > 0)
+                {
+                    firstHit = raycastResults[0].gameObject;
+                    return true;
+                }
+
+                firstHit = null;
+                return false;
             }
 
-            SlotView GetSlotView(GameObject firstHit)
+            bool TryGetSlotView(GameObject firstHit, out SlotView targetSlotView)
             {
-                var result = firstHit 
-                    ? firstHit.GetComponent<SlotView>() 
-                    : null;
+                var hitSlotView = firstHit.GetComponentInParent<SlotView>();
 
-                return result;
+                if (hitSlotView != null)
+                {
+                    targetSlotView = hitSlotView;
+                    return true;
+                }
+
+                targetSlotView = null;
+                return false;
+            }
+
+            bool IsDifferentSlotView(SlotView source, SlotView target)
+            {
+                return source != target;
             }
         }
 
@@ -199,6 +218,7 @@ namespace Wigro.Runtime
                 ? HiddenTransform.position
                 : ShownTransform.position;
 
+            // 7)
             var shouldAnimate = _isOpen
                 ? _doAnimate.onClose
                 : _doAnimate.onOpen;
@@ -211,23 +231,20 @@ namespace Wigro.Runtime
                 MainPanel.transform.position = targetPosition;
         }
 
-        private Transform GetItemTransform(SlotModel slot)
-        {
-            var itemId = slot.AttachedItem.Data.ItemId;
-            return _itemViewsById[itemId].transform;
-        }
-
         private void OnDestroy()
         {
             foreach (var slotView in _slotViewsById.Values)
             {
-                slotView.OnClicked -= OnSlotClick;
-                slotView.OnDragBegun -= OnSlotDragBegin;
-                slotView.OnDragEvent -= OnSlotDrag;
-                slotView.OnDragEnded -= OnSlotDragEnd;
+                slotView.OnClickEvent -= OnSlotClick;
+                slotView.OnBeginDragEvent -= OnBeginDragProxy;
+                slotView.OnDragEvent -= OnDragProxy;
+                slotView.OnEndDragEvent -= OnEndDragProxy;
             }
 
             ToggleInventoryButton.onClick.RemoveAllListeners();
+
+            _slotViewPool.Clear();
+            _itemViewPool.Clear();
         }
     }
 }
