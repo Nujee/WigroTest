@@ -6,6 +6,7 @@ using System;
 namespace Wigro.Editor
 {
     [CustomEditor(typeof(Settings))]
+    // 3) b)
     internal sealed class SettingsInspector : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
@@ -28,6 +29,10 @@ namespace Wigro.Editor
             SerializedProperty amountProperty = serializedSettings.FindProperty("_amount");
             int newAmount = EditorGUILayout.IntField("Inventory Size", amountProperty.intValue);
             amountProperty.intValue = Math.Max(newAmount, 10);
+
+            SerializedProperty animDurationProperty = serializedSettings.FindProperty("_animDuration");
+            float newDuration = EditorGUILayout.FloatField("Anim Duration", animDurationProperty.floatValue);
+            animDurationProperty.floatValue = Mathf.Max(newDuration, 0.1f);
 
             SerializedProperty flagsProperty = serializedSettings.FindProperty("_flags");
             int currentFlags = flagsProperty.intValue;

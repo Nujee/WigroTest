@@ -8,6 +8,7 @@ namespace Wigro.Runtime
         [field: SerializeField] public Settings Settings { get; private set; }
         [field: SerializeField] public InventoryView InventoryView { get; private set; }
 
+        // 11) c)
         private void Start()
         {
             // 9)
@@ -17,7 +18,7 @@ namespace Wigro.Runtime
             var presenter = new InventoryPresenter(model, InventoryView);
 
             InventoryView.Init(Settings, database.Count);
-            presenter.Init(Settings.Amount, database);
+            presenter.Init(Settings.Amount, database, Settings);
         }
     }
 }

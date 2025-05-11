@@ -10,6 +10,7 @@ namespace Wigro.Runtime
         IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
         [field: SerializeField] public Image Background { get; private set; }
+        [field: SerializeField] public Image SelectionFrame{ get; private set; }
         [field: SerializeField] public Color NeutralColor { get; private set; }
 
         public event Action<SlotView, PointerEventData> OnClickEvent = delegate { };
@@ -24,5 +25,11 @@ namespace Wigro.Runtime
         public void OnDrag(PointerEventData eventData) => OnDragEvent(this, eventData);
 
         public void OnEndDrag(PointerEventData eventData) => OnEndDragEvent(this, eventData);
+
+        public void Select() => ToggleFrame(true);
+
+        public void Deselect() => ToggleFrame(false);
+
+        private void ToggleFrame(bool isActive) => SelectionFrame.gameObject.SetActive(isActive);
     }
 }
