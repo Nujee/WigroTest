@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
 
 namespace Wigro.Runtime
 {
@@ -13,26 +11,20 @@ namespace Wigro.Runtime
         private readonly Dictionary<int, SlotView> _slotViewsById = new();
         private readonly Dictionary<string, ItemView> _itemViewsById = new();
 
-        private bool _isOpen;
-        private Settings _settings;
-
         private GenericPool<SlotView> _slotViewPool;
         private GenericPool<ItemView> _itemViewPool;
 
-        private PointerEventData _lastClickEventData;
-        private PointerEventData _lastBeginDragEventData;
-        private PointerEventData _lastDragEventData;
+        private bool _isOpen; 
+        private bool _inTransition;
 
-        [field: SerializeField] public Canvas Canvas { get; private set; }
-        [field: SerializeField] public InfoView InfoView { get; private set; }
-        [field: SerializeField] public RectTransform MainPanel { get; private set; }
-        [field: SerializeField] public Button ToggleInventoryButton { get; private set; }
-        [field: SerializeField] public RectTransform HiddenTransform { get; private set; }
-        [field: SerializeField] public RectTransform ShownTransform { get; private set; }
-        [field: SerializeField] public RectTransform SlotsParent { get; private set; }
-        [field: SerializeField] public SlotView SlotPrefab { get; private set; }
-        [field: SerializeField] public ItemView ItemPrefab { get; private set; }
-        [field: SerializeField] public List<Sprite> ItemSprites { get; private set; }
+        private PointerEventData _clickEventDataCache;
+        private PointerEventData _beginDragEventDataCache;
+        private PointerEventData _dragEventDataCache;
+
+        private int? _lastSelectedSlotId = null;
+
+        private Settings _settings; // 3) c)
+        [field: SerializeField] public InventoryViewUILinks UI { get; private set; }
 
         public event Action<int> OnClick = delegate { };
         public event Action<int> OnBeginDrag = delegate { };
@@ -43,15 +35,14 @@ namespace Wigro.Runtime
 
         public InventoryView Init(Settings settings, int itemsCount)
         {
-            // _doAnimate = doAnimate;
             _settings = settings;
 
-            _slotViewPool = new GenericPool<SlotView>(SlotPrefab, _settings.Amount, SlotsParent);
-            _itemViewPool = new GenericPool<ItemView>(ItemPrefab, itemsCount);
+            _slotViewPool = new GenericPool<SlotView>(UI.SlotPrefab, _settings.Amount, UI.SlotsParent);
+            _itemViewPool = new GenericPool<ItemView>(UI.ItemPrefab, itemsCount);
 
-            MainPanel.transform.position = HiddenTransform.position;
+            UI.MainPanel.transform.position = UI.HiddenTransform.position;
 
-            ToggleInventoryButton.onClick.AddListener(ToggleInventoryState);
+            UI.ToggleInventoryButton.onClick.AddListener(ToggleInventoryState);
 
             return this;
         }
@@ -70,7 +61,7 @@ namespace Wigro.Runtime
 
         public void SetupItemView(string itemId)
         {
-            var randomSprite = ItemSprites[UnityEngine.Random.Range(0, ItemSprites.Count)];
+            var randomSprite = UI.ItemSprites[UnityEngine.Random.Range(0, UI.ItemSprites.Count)];
             var itemView = _itemViewPool.Get().Init(randomSprite);
 
             _itemViewsById[itemId] = itemView;
@@ -78,8 +69,9 @@ namespace Wigro.Runtime
 
         public void AttachItemViewToSlotView(int slotId, string itemId)
         {
-            var slotView = _slotViewsById[slotId];
-            var itemView = _itemViewsById[itemId];
+            if (!_slotViewsById.TryGetValue(slotId, out var slotView) ||
+                !_itemViewsById.TryGetValue(itemId, out var itemView))
+                return;
 
             itemView.transform.SetParent(slotView.transform);
             itemView.transform.localPosition = Vector2.zero;
@@ -87,7 +79,8 @@ namespace Wigro.Runtime
 
         public void RemoveItemView(string itemId)
         {
-            var itemView = _itemViewsById[itemId];
+            if (!_itemViewsById.TryGetValue(itemId, out var itemView))
+                return;
 
             _itemViewsById.Remove(itemId);
             _itemViewPool.Release(itemView);
@@ -100,15 +93,19 @@ namespace Wigro.Runtime
 
         public void BeginDragItem(string itemId)
         {
-            var itemTransform = _itemViewsById[itemId].transform;
-            itemTransform.SetParent(Canvas.transform, worldPositionStays: true);
-            itemTransform.position = _lastBeginDragEventData.position;
+            if (!_itemViewsById.TryGetValue(itemId, out var itemView))
+                return;
+
+            itemView.transform.SetParent(UI.Canvas.transform, worldPositionStays: true);
+            itemView.transform.position = _beginDragEventDataCache.position;
         }
 
         public void DragItem(string itemId)
         {
-            var itemTransform = _itemViewsById[itemId].transform;
-            itemTransform.position = _lastDragEventData.position;
+            if (!_itemViewsById.TryGetValue(itemId, out var itemView))
+                return;
+
+            itemView.transform.position = _dragEventDataCache.position;
         }
 
         private void OnSlotClick(SlotView view, PointerEventData data)
@@ -117,13 +114,37 @@ namespace Wigro.Runtime
             // info view - settings.showinfo ? {on and update} : {}
         }
 
+        public void UpdateSelection(int selectedSlotId)
+        {
+            if (_lastSelectedSlotId != null &&
+                _slotViewsById.TryGetValue(_lastSelectedSlotId.Value, out var lastSelectedSlotView))
+            {
+                lastSelectedSlotView.Deselect();
+            }
+
+            // ¬ыбираем новый слот (если существует)
+            if (_slotViewsById.TryGetValue(selectedSlotId, out var selectedSlot))
+            {
+                selectedSlot.Select();
+                _lastSelectedSlotId = selectedSlotId;
+            }
+        }
+
+        private void ClearSelection()
+        {
+            if (_lastSelectedSlotId == null)
+                return;
+
+            _slotViewsById[_lastSelectedSlotId.Value].Deselect();
+            _lastSelectedSlotId = null;
+        }
+
         private void OnClickProxy(SlotView slotView, PointerEventData data)
         {
-            //if (!_slotViewsById.TryGetKeyByValue(slotView, out var slotId))
-            //    return;
+            if (!_slotViewsById.TryGetKeyByValue(slotView, out var slotId))
+                return;
 
-            //_lastClickEventData = data;
-            //OnBeginDrag(slotId);
+            OnClick(slotId);
         }
 
         private void OnBeginDragProxy(SlotView slotView, PointerEventData data)
@@ -131,7 +152,7 @@ namespace Wigro.Runtime
             if (!_slotViewsById.TryGetKeyByValue(slotView, out var slotId))
                 return;
 
-            _lastBeginDragEventData = data;
+            _beginDragEventDataCache = data;
             OnBeginDrag(slotId);
 
             //TODO: centralize infoview logic
@@ -143,7 +164,7 @@ namespace Wigro.Runtime
             if (!_slotViewsById.TryGetKeyByValue(slotView, out var slotId))
                 return;
 
-            _lastDragEventData = data;
+            _dragEventDataCache = data;
             OnDrag(slotId);
         }
 
@@ -176,7 +197,7 @@ namespace Wigro.Runtime
 
             bool IsOutsideInventory()
             {
-                return !RectTransformUtility.RectangleContainsScreenPoint(MainPanel, data.position, Canvas.worldCamera);
+                return !RectTransformUtility.RectangleContainsScreenPoint(UI.MainPanel, data.position, UI.Canvas.worldCamera);
             }
 
             bool TryRaycastHit(out GameObject firstHit)
@@ -216,21 +237,27 @@ namespace Wigro.Runtime
 
         private async void ToggleInventoryState()
         {
+            if (_inTransition)
+                return;
+
+            _inTransition = true;
+
             var targetPosition = _isOpen
-                ? HiddenTransform.position
-                : ShownTransform.position;
+                ? UI.HiddenTransform.position
+                : UI.ShownTransform.position;
 
             // 7)
             var shouldAnimate = _isOpen
                 ? _settings.CloseAnimated
                 : _settings.OpenAnimated;
 
-            _isOpen = !_isOpen;
-
             if (shouldAnimate)
-                await MainPanel.LinearMoveTo(targetPosition, 0.5f);
+                await UI.MainPanel.LinearMoveTo(targetPosition, _settings.AnimDuration);
             else
-                MainPanel.transform.position = targetPosition;
+                UI.MainPanel.transform.position = targetPosition;
+
+            _isOpen = !_isOpen;
+            _inTransition = false;
         }
 
         private void OnDestroy()
@@ -243,7 +270,7 @@ namespace Wigro.Runtime
                 slotView.OnEndDragEvent -= OnEndDragProxy;
             }
 
-            ToggleInventoryButton.onClick.RemoveAllListeners();
+            UI.ToggleInventoryButton.onClick.RemoveAllListeners();
 
             _slotViewPool.Clear();
             _itemViewPool.Clear();

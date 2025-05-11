@@ -16,6 +16,7 @@ namespace Wigro.Runtime
         void AttachItemViewToSlotView(int slotId, string itemId);
         void RemoveItemView(string itemId);
         void ClickSlot(int slotId);
+        void UpdateSelection(int slotId);
         void BeginDragItem(string itemId);
         void DragItem(string itemId);
     }

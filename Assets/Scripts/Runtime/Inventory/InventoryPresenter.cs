@@ -7,6 +7,7 @@ namespace Wigro.Runtime
     {
         private InventoryModel _model;
         private IInventoryView _view;
+        private Settings _settings;
 
         public InventoryPresenter(InventoryModel model, IInventoryView view)
         {
@@ -14,8 +15,11 @@ namespace Wigro.Runtime
             _view = view;
         }
 
-        public void Init(int inventorySize, List<ItemData> database)
+        public void Init(int inventorySize, List<ItemData> database, Settings settings)
         {
+            //  extract all in methods
+            _settings = settings;
+
             _model.CreateSlots(inventorySize);
 
             foreach (var slot in _model.Slots)
@@ -39,8 +43,22 @@ namespace Wigro.Runtime
             _view.OnEndDragReset += HandleEndDragReset;
         }
 
-        private void HandleClick(int sourceSlotId)
+        private void HandleClick(int clickedSlotId)
         {
+            if (!TryGetSlotModelBySlotId(clickedSlotId, out var clickedSlot) ||
+                clickedSlot.IsEmpty)
+                return;
+
+            _view.UpdateSelection(clickedSlotId);
+
+            // в целом - просто _view.UpdateSelection() будет достаточно. реализация там такая:
+            // clickedSlot.Select();
+            // foreach(otherSlot) => otherSlot.Deselect() ИЛИ lastSelectedSlot.Deselect()
+
+            //if (!clickedSlot.IsEmpty)
+            //{
+            //   _view.UpdateInfo(clickedSlot.AttachedItem.Data.ItemId);
+            //}
 
         }
 
