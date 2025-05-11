@@ -378,7 +378,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Settings>k__BackingField: {fileID: 11400000, guid: a73f277be073a8f49a91262c0880b6ad, type: 2}
-  <View>k__BackingField: {fileID: 1588792543}
+  <InventoryView>k__BackingField: {fileID: 1588792543}
 --- !u!4 &286679628
 Transform:
   m_ObjectHideFlags: 0

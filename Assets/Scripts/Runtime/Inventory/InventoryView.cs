@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -13,7 +14,7 @@ namespace Wigro.Runtime
         private readonly Dictionary<string, ItemView> _itemViewsById = new();
 
         private bool _isOpen;
-        private (bool onOpen, bool onClose) _doAnimate;
+        private Settings _settings;
 
         private GenericPool<SlotView> _slotViewPool;
         private GenericPool<ItemView> _itemViewPool;
@@ -40,11 +41,12 @@ namespace Wigro.Runtime
         public event Action<int, int> OnEndDragInDifferentSlot = delegate { };
         public event Action<int> OnEndDragReset = delegate { };
 
-        public InventoryView Init((bool onOpen, bool onClose) doAnimate, int inventorySize, int itemsCount)
+        public InventoryView Init(Settings settings, int itemsCount)
         {
-            _doAnimate = doAnimate;
+            // _doAnimate = doAnimate;
+            _settings = settings;
 
-            _slotViewPool = new GenericPool<SlotView>(SlotPrefab, inventorySize, SlotsParent);
+            _slotViewPool = new GenericPool<SlotView>(SlotPrefab, _settings.Amount, SlotsParent);
             _itemViewPool = new GenericPool<ItemView>(ItemPrefab, itemsCount);
 
             MainPanel.transform.position = HiddenTransform.position;
@@ -220,8 +222,8 @@ namespace Wigro.Runtime
 
             // 7)
             var shouldAnimate = _isOpen
-                ? _doAnimate.onClose
-                : _doAnimate.onOpen;
+                ? _settings.CloseAnimated
+                : _settings.OpenAnimated;
 
             _isOpen = !_isOpen;
 
