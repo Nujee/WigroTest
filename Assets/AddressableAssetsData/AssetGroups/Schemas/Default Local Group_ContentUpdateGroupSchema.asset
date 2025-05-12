@@ -9,10 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 486d1611a60cd6d45ab8c20aa74a5b1a, type: 3}
-  m_Name: Settings
+  m_Script: {fileID: 11500000, guid: 5834b5087d578d24c926ce20cd31e6d6, type: 3}
+  m_Name: Default Local Group_ContentUpdateGroupSchema
   m_EditorClassIdentifier: 
-  _folder: {fileID: 102900000, guid: d7c26643cd4d47e49afa37a08b22ce11, type: 3}
-  _amount: 45
-  _animDuration: 0.5
-  _flags: 7
+  m_Group: {fileID: 11400000, guid: 88f7573aca1dde844837253a4ae03d41, type: 2}
+  m_StaticContent: 0

@@ -9,10 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 486d1611a60cd6d45ab8c20aa74a5b1a, type: 3}
-  m_Name: Settings
+  m_Script: {fileID: 11500000, guid: b1487f5d688e4f94f828f879d599dbdc, type: 3}
+  m_Name: Built In Data_PlayerDataGroupSchema
   m_EditorClassIdentifier: 
-  _folder: {fileID: 102900000, guid: d7c26643cd4d47e49afa37a08b22ce11, type: 3}
-  _amount: 45
-  _animDuration: 0.5
-  _flags: 7
+  m_Group: {fileID: 11400000, guid: 59588ea0992c4684a9b565aa9c717cdd, type: 2}
+  m_IncludeResourcesFolders: 1
+  m_IncludeBuildSettingsScenes: 1
