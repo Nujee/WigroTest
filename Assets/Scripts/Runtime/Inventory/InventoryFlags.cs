@@ -1,6 +1,9 @@
-public enum InventoryFlags
+namespace Wigro.Runtime
 {
-    OpenAnimated = 1 << 0,
-    CloseAnimated = 1 << 1,
-    ShowInfo = 1 << 2
+    public enum InventoryFlags
+    {
+        OpenAnimated = 1 << 0,
+        CloseAnimated = 1 << 1,
+        ShowInfo = 1 << 2
+    }
 }

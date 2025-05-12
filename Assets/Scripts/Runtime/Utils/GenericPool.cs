@@ -1,50 +1,53 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public sealed class GenericPool<T> where T : Component
+namespace Wigro.Runtime
 {
-    private readonly T _prefab;
-    private readonly Transform _parent;
-    private readonly Queue<T> _pool;
-
-    public GenericPool(T prefab, int initialSize, Transform parent = null)
+    public sealed class GenericPool<T> where T : Component
     {
-        _prefab = prefab;
-        _parent = parent;
-        _pool = new Queue<T>(initialSize);
+        private readonly T _prefab;
+        private readonly Transform _parent;
+        private readonly Queue<T> _pool;
 
-        for (var i = 0; i < initialSize; i++)
+        public GenericPool(T prefab, int initialSize, Transform parent = null)
         {
-            var obj = CreateNewObject();
+            _prefab = prefab;
+            _parent = parent;
+            _pool = new Queue<T>(initialSize);
+
+            for (var i = 0; i < initialSize; i++)
+            {
+                var obj = CreateNewObject();
+                obj.gameObject.SetActive(false);
+                _pool.Enqueue(obj);
+            }
+        }
+
+        private T CreateNewObject()
+        {
+            return Object.Instantiate(_prefab, _parent);
+        }
+
+        public T Get()
+        {
+            T obj = _pool.Count > 0 ? _pool.Dequeue() : CreateNewObject();
+            obj.gameObject.SetActive(true);
+            return obj;
+        }
+
+        public void Release(T obj)
+        {
             obj.gameObject.SetActive(false);
             _pool.Enqueue(obj);
         }
-    }
 
-    private T CreateNewObject()
-    {
-        return Object.Instantiate(_prefab, _parent);
-    }
-
-    public T Get()
-    {
-        T obj = _pool.Count > 0 ? _pool.Dequeue() : CreateNewObject();
-        obj.gameObject.SetActive(true);
-        return obj;
-    }
-
-    public void Release(T obj)
-    {
-        obj.gameObject.SetActive(false);
-        _pool.Enqueue(obj);
-    }
-
-    public void Clear()
-    {
-        foreach (var obj in _pool)
+        public void Clear()
         {
-            Object.Destroy(obj.gameObject);
+            foreach (var obj in _pool)
+            {
+                Object.Destroy(obj.gameObject);
+            }
+            _pool.Clear();
         }
-        _pool.Clear();
     }
 }

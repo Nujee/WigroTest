@@ -1,7 +1,10 @@
-public enum ItemRarity
+namespace Wigro.Runtime
 {
-    Common,
-    Rare,
-    Epic,
-    Legendary
+    public enum ItemRarity
+    {
+        Common,
+        Rare,
+        Epic,
+        Legendary
+    }
 }
