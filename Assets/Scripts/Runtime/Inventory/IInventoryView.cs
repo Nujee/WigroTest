@@ -4,21 +4,22 @@ namespace Wigro.Runtime
 {
     public interface IInventoryView
     {
-        event Action<int> OnSlotClick;
+        event Action<int> OnSlotSelect;
         event Action<int> OnBeginDrag;
         event Action<int> OnDrag;
         event Action<int> OnEndDragOutsideInventory;
         event Action<int, int> OnEndDragInDifferentSlot;
         event Action<int> OnEndDragReset;
 
-        void SetupSlotView(int slotId);
-        void SetupItemView(string itemId);
-        void SubscribeToSlotInput(int slotId);
-        void AttachItemViewToSlotView(int slotId, string itemId);
-        void RemoveItemView(string itemId);
-        void BeginDragItem(string itemId);
+        void InitializeSlot(int slotId);
+        void EnableSlotInteraction(int slotId);
+        void InitializeItem(string itemId);
+        void AttachItemToSlot(int slotId, string itemId);
+        void RemoveItem(string itemId);
+        void BeginDragItem(int slotId,string itemId);
         void DragItem(string itemId);
-        void UpdateInfoPanel(string itemId, int rarity);
+        void ShowItemInfo(string itemId, int rarity);
         void UpdateSelection(int slotId);
+        void ApplyRarityVisualToSlot(int slotId, int? rarity);
     }
 }

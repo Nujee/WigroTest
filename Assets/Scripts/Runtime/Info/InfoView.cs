@@ -17,7 +17,7 @@ namespace Wigro.Runtime
 
         public void Close() => ToggleState(false);
 
-        public void Show() => ToggleState(true);
+        public void Open() => ToggleState(true);
 
         private void ToggleState(bool isActive) => MainPanel.gameObject.SetActive(isActive);
     }
