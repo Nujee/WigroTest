@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -8,43 +9,28 @@ namespace Wigro.Runtime
     [DisallowMultipleComponent]
     public sealed class InventoryView : MonoBehaviour, IInventoryView
     {
-        #region View lookups and pools
-
         private readonly Dictionary<int, SlotView> _slotViewsById = new();
         private readonly Dictionary<string, ItemView> _itemViewsById = new();
 
         private GenericPool<SlotView> _slotViewPool;
         private GenericPool<ItemView> _itemViewPool;
 
-        #endregion
-
-        #region Cache
-
         private bool _isOpen; 
-        private bool _inTransition;
+        private bool _isInTransition;
         private int? _lastSelectedSlotId = null;
         private PointerEventData _beginDragEventDataCache;
         private PointerEventData _dragEventDataCache;
 
-        #endregion
-
-        #region Dependencies
-
+        private InfoViewDecorator _infoViewDecorator;
         private Settings _settings; // 3) c)
         [field: SerializeField] public InventoryViewUILinks UI { get; private set; }
 
-        #endregion
-
-        #region Events
-
-        public event Action<int> OnSlotClick = delegate { };
+        public event Action<int> OnSlotSelect = delegate { };
         public event Action<int> OnBeginDrag = delegate { };
         public event Action<int> OnDrag = delegate { };
         public event Action<int> OnEndDragOutsideInventory = delegate { };
         public event Action<int, int> OnEndDragInDifferentSlot = delegate { };
         public event Action<int> OnEndDragReset = delegate { };
-
-        #endregion
 
         public InventoryView Init(Settings settings, int itemsCount)
         {
@@ -53,7 +39,11 @@ namespace Wigro.Runtime
             _slotViewPool = new GenericPool<SlotView>(UI.SlotPrefab, _settings.Amount, UI.SlotsParent);
             _itemViewPool = new GenericPool<ItemView>(UI.ItemPrefab, itemsCount);
 
-            UI.MainPanel.transform.position = UI.HiddenTransform.position;
+            UI.MainPanel.transform.position = UI.CloseTransform.position;
+
+            _infoViewDecorator = new InfoViewDecorator(UI.InfoView, settings);
+            _infoViewDecorator.Close();
+
             UI.ToggleInventoryButton.onClick.AddListener(ToggleInventoryState);
 
             return this;
@@ -61,13 +51,16 @@ namespace Wigro.Runtime
 
         #region IInventoryView methods
 
-        public void SetupSlotView(int slotId)
+        public void InitializeSlot(int slotId)
         {
             var slotView = _slotViewPool.Get();
             _slotViewsById[slotId] = slotView;
+
+            slotView.PaintBackground(UI.EmptySlotColor);
+            slotView.Deselect();
         }
 
-        public void SubscribeToSlotInput(int slotId)
+        public void EnableSlotInteraction(int slotId)
         {
             var slotView = _slotViewsById[slotId];
 
@@ -77,7 +70,7 @@ namespace Wigro.Runtime
             slotView.OnEndDragEvent += OnEndDragProxy;
         }
 
-        public void SetupItemView(string itemId)
+        public void InitializeItem(string itemId)
         {
             var randomSprite = UI.ItemSprites[UnityEngine.Random.Range(0, UI.ItemSprites.Count)];
             var itemView = _itemViewPool.Get().Init(randomSprite);
@@ -85,7 +78,7 @@ namespace Wigro.Runtime
             _itemViewsById[itemId] = itemView;
         }
 
-        public void AttachItemViewToSlotView(int slotId, string itemId)
+        public void AttachItemToSlot(int slotId, string itemId)
         {
             var slotView = _slotViewsById[slotId];
             var itemView = _itemViewsById[itemId];
@@ -94,23 +87,23 @@ namespace Wigro.Runtime
             itemView.transform.localPosition = Vector2.zero;
         }
 
-        public void RemoveItemView(string itemId)
+        public void RemoveItem(string itemId)
         {
             var itemView = _itemViewsById[itemId];
-
             _itemViewsById.Remove(itemId);
             _itemViewPool.Release(itemView);
         }
 
-        public void BeginDragItem(string itemId)
+        public void BeginDragItem(int slotId, string itemId)
         {
             var itemView = _itemViewsById[itemId];
-
             itemView.transform.SetParent(UI.Canvas.transform, worldPositionStays: true);
             itemView.transform.position = _beginDragEventDataCache.position;
 
-            UI.InfoView.Close();
-            ClearSelection();
+            var slotView = _slotViewsById[slotId];
+            slotView.PaintBackground(UI.EmptySlotColor);
+
+            LoseFocus();
         }
 
         public void DragItem(string itemId)
@@ -119,15 +112,15 @@ namespace Wigro.Runtime
             itemView.transform.position = _dragEventDataCache.position;
         }
 
-        public void UpdateInfoPanel(string itemId, int rarity)
+        public void ShowItemInfo(string itemId, int rarity)
         {
-            UI.InfoView.Show();
-            UI.InfoView.UpdateInfo(itemId, rarity);
+            _infoViewDecorator.Open();
+            _infoViewDecorator.UpdateInfo(itemId, rarity);
         }
 
         public void UpdateSelection(int selectedSlotId)
         {
-            if (_lastSelectedSlotId != null)
+            if (_lastSelectedSlotId.HasValue)
             {
                 var lastSelectedSlotView = _slotViewsById[_lastSelectedSlotId.Value];
                 lastSelectedSlotView.Deselect();
@@ -138,23 +131,25 @@ namespace Wigro.Runtime
             _lastSelectedSlotId = selectedSlotId;
         }
 
-        private void ClearSelection()
+        public void ApplyRarityVisualToSlot(int slotId, int? rarity)
         {
-            if (_lastSelectedSlotId == null)
-                return;
+            var slotView = _slotViewsById[slotId];
 
-            _slotViewsById[_lastSelectedSlotId.Value].Deselect();
-            _lastSelectedSlotId = null;
+            var color = rarity.HasValue
+                ? UI.RarityColors.Find(rc => rc.Key == (ItemRarity)rarity).Value
+                : UI.EmptySlotColor;
+
+            slotView.PaintBackground(color);
         }
 
         #endregion
 
         #region Event proxy handlers
 
-        private void OnClickProxy(SlotView slotView, PointerEventData data)
+        private void OnClickProxy(SlotView slotView)
         {
             var slotId = _slotViewsById.GetKeyByValue(slotView);
-            OnSlotClick(slotId);
+            OnSlotSelect(slotId);
         }
 
         private void OnBeginDragProxy(SlotView slotView, PointerEventData data)
@@ -239,27 +234,63 @@ namespace Wigro.Runtime
 
         private async void ToggleInventoryState()
         {
-            if (_inTransition)
+            if (_isInTransition)
                 return;
 
-            _inTransition = true;
+            _isInTransition = true;
+            UI.DisableInput();
 
-            var targetPosition = _isOpen
-                ? UI.HiddenTransform.position
-                : UI.ShownTransform.position;
+            if (_isOpen)
+                await CloseInventory();
+            else
+                await OpenInventory();
 
-            // 7)
-            var shouldAnimate = _isOpen
+            _isOpen = !_isOpen;
+
+            _isInTransition = false;
+            UI.EnableInput();
+        }
+
+        private async Task OpenInventory()
+        {
+            await MoveInventoryOnToggle();
+        }
+
+        private async Task CloseInventory()
+        {
+            LoseFocus();
+            await MoveInventoryOnToggle();
+        }
+
+        private async Task MoveInventoryOnToggle()
+        {
+            var doAnimate = _isOpen
                 ? _settings.CloseAnimated
                 : _settings.OpenAnimated;
 
-            if (shouldAnimate)
+            var targetPosition = _isOpen
+                ? UI.CloseTransform.position
+                : UI.OpenTransform.position;
+
+            if (doAnimate)
                 await UI.MainPanel.LinearMoveTo(targetPosition, _settings.AnimDuration);
             else
                 UI.MainPanel.transform.position = targetPosition;
+        }
 
-            _isOpen = !_isOpen;
-            _inTransition = false;
+        private void LoseFocus()
+        {
+            _infoViewDecorator.Close();
+            ClearSelection();
+        }
+
+        private void ClearSelection()
+        {
+            if (!_lastSelectedSlotId.HasValue)
+                return;
+
+            _slotViewsById[_lastSelectedSlotId.Value].Deselect();
+            _lastSelectedSlotId = null;
         }
 
         private void OnDestroy()
