@@ -23,20 +23,17 @@ namespace Wigro.Runtime
             transform.position = endPoint;
         }
 
-        public static bool TryGetKeyByValue<TKey, TValue>(this IDictionary<TKey, TValue> dictionary,
-            TValue value, out TKey key)
+        public static TKey GetKeyByValue<TKey, TValue>(this IDictionary<TKey, TValue> dictionary,
+            TValue value)
         {
             foreach (var pair in dictionary)
             {
                 if (EqualityComparer<TValue>.Default.Equals(pair.Value, value))
                 {
-                    key = pair.Key;
-                    return true;
+                    return pair.Key;
                 }
             }
-
-            key = default;
-            return false;
+            return default;
         }
     }
 }

@@ -9,43 +9,16 @@ namespace Wigro.Runtime
         [field: SerializeField] public TMP_Text IDText { get; private set; }
         [field: SerializeField] public TMP_Text RarityText { get; private set; }
 
-        private Slot[] _slots;
-
-        public void Init(bool showInfo, Slot[] slots)
+        public void UpdateInfo(string itemId, int rarity)
         {
-            _slots = slots;
-
-            if (!showInfo)
-                return;
-
-            foreach (var slot in _slots)
-            {
-                //slot.OnClicked += UpdateInfo;
-                //slot.OnDragBegun += Close;
-            }
+            IDText.text = itemId;
+            RarityText.text = ((ItemRarity)rarity).ToString() + $" ({rarity})"; // e.g. "Epic (2)"
         }
 
-        private void OnDestroy()
-        {
-            //foreach (var slot in _slots)
-            //{
-            //    slot.OnClicked -= UpdateInfo;
-            //}
-        }
+        public void Close() => ToggleState(false);
 
-        private void UpdateInfo(Item item)
-        {
-            MainPanel.gameObject.SetActive(true);
+        public void Show() => ToggleState(true);
 
-            IDText.text = item.Data.Id.ToString();
-            RarityText.text = item.Data.Rarity.ToString();
-        }
-
-        private void Close(Item _) => Close();
-
-        private void Close()
-        {
-            MainPanel.gameObject.SetActive(false);
-        }
+        private void ToggleState(bool isActive) => MainPanel.gameObject.SetActive(isActive);
     }
 }

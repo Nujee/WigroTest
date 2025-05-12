@@ -25,6 +25,7 @@ namespace Wigro.Runtime
             foreach (var slot in _model.Slots)
             {
                 _view.SetupSlotView(slot.Id);
+                _view.SubscribeToSlotInput(slot.Id);
                 slot.OnItemSet += HandleItemSet;
             }
 
@@ -35,7 +36,7 @@ namespace Wigro.Runtime
 
             _model.SetItemsToSlots();
 
-            _view.OnClick += HandleClick;
+            _view.OnSlotClick += HandleSlotClick;
             _view.OnBeginDrag += HandleBeginDrag;
             _view.OnDrag += HandleDrag;
             _view.OnEndDragOutsideInventory += HandleEndDragOutsideInventory;
@@ -43,46 +44,45 @@ namespace Wigro.Runtime
             _view.OnEndDragReset += HandleEndDragReset;
         }
 
-        private void HandleClick(int clickedSlotId)
+        private void HandleSlotClick(int clickedSlotId)
         {
-            if (!TryGetSlotModelBySlotId(clickedSlotId, out var clickedSlot) ||
-                clickedSlot.IsEmpty)
+            var clickedSlot = _model.Slots[clickedSlotId];
+            if (clickedSlot.IsEmpty)
                 return;
 
+            var attachedItem = clickedSlot.AttachedItem;
+            _view.UpdateInfoPanel(attachedItem.Data.ItemId, attachedItem.Data.Rarity);
+
             _view.UpdateSelection(clickedSlotId);
-
-            // в целом - просто _view.UpdateSelection() будет достаточно. реализация там такая:
-            // clickedSlot.Select();
-            // foreach(otherSlot) => otherSlot.Deselect() ИЛИ lastSelectedSlot.Deselect()
-
-            //if (!clickedSlot.IsEmpty)
-            //{
-            //   _view.UpdateInfo(clickedSlot.AttachedItem.Data.ItemId);
-            //}
-
         }
 
         private void HandleBeginDrag(int sourceSlotId)
         {
-            if (!TryGetItemIdBySlotId(sourceSlotId, out var itemId))
+            var sourceSlot = _model.Slots[sourceSlotId];
+            if (sourceSlot.IsEmpty) 
                 return;
 
+            var itemId = sourceSlot.AttachedItem.Data.ItemId;
             _view.BeginDragItem(itemId);
         }
 
         private void HandleDrag(int sourceSlotId)
         {
-            if (!TryGetItemIdBySlotId(sourceSlotId, out var itemId))
+            var sourceSlot = _model.Slots[sourceSlotId];
+            if (sourceSlot.IsEmpty)
                 return;
 
+            var itemId = sourceSlot.AttachedItem.Data.ItemId;
             _view.DragItem(itemId);
         }
 
         private void HandleEndDragOutsideInventory(int sourceSlotId)
         {
-            if (!TryGetSlotModelBySlotId(sourceSlotId, out var sourceSlot) ||
-                !TryGetItemIdBySlotId(sourceSlotId, out var itemId))
+            var sourceSlot = _model.Slots[sourceSlotId];
+            if (sourceSlot.IsEmpty)
                 return;
+
+            var itemId = sourceSlot.AttachedItem.Data.ItemId;
 
             _model.RemoveItem(sourceSlot);
             _view.RemoveItemView(itemId);
@@ -90,9 +90,8 @@ namespace Wigro.Runtime
 
         private void HandleEndDragInDifferentSlot(int sourceSlotId, int targetSlotId)
         {
-            if (!TryGetSlotModelBySlotId(sourceSlotId, out var sourceSlot) ||
-                !TryGetSlotModelBySlotId(targetSlotId, out var targetSlot))
-                return;
+            var sourceSlot = _model.Slots[sourceSlotId];
+            var targetSlot = _model.Slots[targetSlotId];
 
             if (sourceSlot.IsEmpty)
                 return;
@@ -105,14 +104,17 @@ namespace Wigro.Runtime
 
         private void HandleEndDragReset(int sourceSlotId)
         {
-            if (!TryGetSlotModelBySlotId(sourceSlotId, out var sourceSlot))
+            var sourceSlot = _model.Slots[sourceSlotId];
+            if (sourceSlot.IsEmpty)
                 return;
 
             _model.ResetItem(sourceSlot);
         }
 
-        private void HandleItemSet(SlotModel slot)
+        private void HandleItemSet(int slotId)
         {
+            var slot = _model.Slots[slotId];
+
             if (slot.IsEmpty)
                 return;
 
@@ -120,42 +122,12 @@ namespace Wigro.Runtime
             _view.AttachItemViewToSlotView(slot.Id, itemId);
         }
 
-        private bool TryGetItemIdBySlotId(int slotId, out string itemId)
-        {
-            var doesSlotExistAndNonEmpty =
-                TryGetSlotModelBySlotId(slotId, out var slot) && !slot.IsEmpty;
-
-            if (doesSlotExistAndNonEmpty)
-            {
-                itemId = slot.AttachedItem.Data.ItemId;
-                return true;
-            }
-
-            itemId = string.Empty;
-            return false;
-        }
-
-        private bool TryGetSlotModelBySlotId(int slotId, out SlotModel slotModel)
-        {
-            foreach (var slot in _model.Slots)
-            {
-                if (slot.Id == slotId)
-                {
-                    slotModel = slot;
-                    return true;
-                }
-            }
-
-            slotModel = null;
-            return false;
-        }
-
         public void Dispose()
         {
             foreach (var slot in _model.Slots)
                 slot.OnItemSet -= HandleItemSet;
 
-            _view.OnClick -= HandleClick;
+            _view.OnSlotClick -= HandleSlotClick;
             _view.OnBeginDrag -= HandleBeginDrag;
             _view.OnDrag -= HandleDrag;
             _view.OnEndDragOutsideInventory -= HandleEndDragOutsideInventory;

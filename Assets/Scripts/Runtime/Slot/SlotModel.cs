@@ -8,14 +8,14 @@ namespace Wigro.Runtime
         public ItemModel AttachedItem { get; private set; }
         public bool IsEmpty => (AttachedItem == null);
 
-        public event Action<SlotModel> OnItemSet = delegate { };
+        public event Action<int> OnItemSet = delegate { };
 
         public SlotModel(int id) => Id = id; 
 
         public void SetItem(ItemModel newItem)
         {
             AttachedItem = newItem;
-            OnItemSet(this);
+            OnItemSet(Id);
         }
 
         public void Clear() => SetItem(null);

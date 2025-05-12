@@ -4,7 +4,7 @@ namespace Wigro.Runtime
 {
     public interface IInventoryView
     {
-        event Action<int> OnClick;
+        event Action<int> OnSlotClick;
         event Action<int> OnBeginDrag;
         event Action<int> OnDrag;
         event Action<int> OnEndDragOutsideInventory;
@@ -13,11 +13,12 @@ namespace Wigro.Runtime
 
         void SetupSlotView(int slotId);
         void SetupItemView(string itemId);
+        void SubscribeToSlotInput(int slotId);
         void AttachItemViewToSlotView(int slotId, string itemId);
         void RemoveItemView(string itemId);
-        void ClickSlot(int slotId);
-        void UpdateSelection(int slotId);
         void BeginDragItem(string itemId);
         void DragItem(string itemId);
+        void UpdateInfoPanel(string itemId, int rarity);
+        void UpdateSelection(int slotId);
     }
 }
