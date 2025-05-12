@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: Settings
   m_EditorClassIdentifier: 
   _folder: {fileID: 102900000, guid: d7c26643cd4d47e49afa37a08b22ce11, type: 3}
-  _amount: 200
+  _amount: 21
+  _animDuration: 0.5
   _flags: 7

@@ -1473,24 +1473,35 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <UI>k__BackingField:
     <Canvas>k__BackingField: {fileID: 928932043}
+    <Raycaster>k__BackingField: {fileID: 928932041}
     <InfoView>k__BackingField: {fileID: 1226835681}
     <MainPanel>k__BackingField: {fileID: 1686252978}
     <ToggleInventoryButton>k__BackingField: {fileID: 1105472616}
-    <HiddenTransform>k__BackingField: {fileID: 781494670}
-    <ShownTransform>k__BackingField: {fileID: 444718555}
+    <CloseTransform>k__BackingField: {fileID: 781494670}
+    <OpenTransform>k__BackingField: {fileID: 444718555}
     <SlotsParent>k__BackingField: {fileID: 1835829829}
     <SlotPrefab>k__BackingField: {fileID: 6370228977991579705, guid: 4f9d5093ccbbf2143bca684dd30e9674, type: 3}
     <ItemPrefab>k__BackingField: {fileID: 2639840742096271897, guid: 4ef8e62bd12369b4bb81b371853b962e, type: 3}
+    <EmptySlotColor>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
+    <RarityColors>k__BackingField:
+    - Key: 0
+      Value: {r: 0.19215687, g: 1, b: 0.19215687, a: 1}
+    - Key: 1
+      Value: {r: 0.19215687, g: 0.19215687, b: 1, a: 1}
+    - Key: 2
+      Value: {r: 0.49803922, g: 0, b: 1, a: 1}
+    - Key: 3
+      Value: {r: 1, g: 1, b: 0, a: 1}
     <ItemSprites>k__BackingField:
     - {fileID: 21300000, guid: 17fa84703485d314b8d6b5216987d4b1, type: 3}
-    - {fileID: 21300000, guid: 0da63bf69e254aa4a83c345c3de497c8, type: 3}
+    - {fileID: 21300000, guid: 66fa19194577350438c952106f661c2f, type: 3}
     - {fileID: 21300000, guid: ed5ce024c84dbdb42ac5037d03e7c039, type: 3}
     - {fileID: 21300000, guid: 32854586e42553846b24646ce18cf625, type: 3}
     - {fileID: 21300000, guid: 2b072f285a732f747b9be104aae155b2, type: 3}
     - {fileID: 21300000, guid: 97a4e2b6ae08b1140a5ba9e22953e029, type: 3}
     - {fileID: 21300000, guid: 89930da27dfbbc64ba1f3baf0ae416bb, type: 3}
-    - {fileID: 21300000, guid: 3279d541bf75c624cbdd7179eb5559a8, type: 3}
-    - {fileID: 21300000, guid: 71d8b2e508f1d9947ba51013600a5eac, type: 3}
+    - {fileID: 21300000, guid: 21d43e7114c758c49886cb9fc604dd66, type: 3}
+    - {fileID: 21300000, guid: 953b8abb3b6548c4294b547c2f473be0, type: 3}
 --- !u!1 &1643481304
 GameObject:
   m_ObjectHideFlags: 0
